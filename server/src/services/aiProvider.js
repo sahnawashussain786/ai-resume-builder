@@ -5,6 +5,8 @@
  * rule-based generator so the app remains fully functional offline.
  */
 
+import { normalizeContent } from './normalize.js'
+
 const BASE_URL = process.env.AI_BASE_URL || 'https://api.openai.com/v1'
 const API_KEY = process.env.AI_API_KEY || ''
 const MODEL = process.env.AI_MODEL || 'gpt-4o-mini'
@@ -85,7 +87,8 @@ export function localGenerateResume({ role, experienceLevel, skills = [], rawTex
 
 export async function generateResumeContent(input) {
   const { role, experienceLevel, skills, rawText } = input || {}
-  if (!aiConfigured) return { source: 'local', content: localGenerateResume({ role, experienceLevel, skills, rawText }) }
+  if (!aiConfigured)
+    return { source: 'local', content: normalizeContent(localGenerateResume({ role, experienceLevel, skills, rawText })) }
 
   const messages = [
     {
@@ -108,7 +111,7 @@ export async function generateResumeContent(input) {
 
   try {
     const text = await chat(messages, { json: true })
-    return { source: 'ai', content: extractJson(text) }
+    return { source: 'ai', content: normalizeContent(extractJson(text)) }
   } catch (err) {
     console.error('AI generation failed, using local fallback:', err.message)
     return { source: 'local', content: localGenerateResume({ role, experienceLevel, skills, rawText }) }

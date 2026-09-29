@@ -4,6 +4,7 @@ import auth from '../middleware/auth.js'
 import { parsePdf } from '../services/pdfParser.js'
 import { parseDocx } from '../services/docxParser.js'
 import { textToResumeJson } from '../services/resumeExtractor.js'
+import { normalizeContent } from '../services/normalize.js'
 
 const router = Router()
 router.use(auth)
@@ -27,7 +28,7 @@ router.post('/resume', upload.single('file'), async (req, res) => {
 
     if (!text || !text.trim()) return res.status(422).json({ message: 'Could not extract any text from this file (scanned PDFs are not supported).' })
 
-    const content = textToResumeJson(text)
+    const content = normalizeContent(textToResumeJson(text))
     res.json({ source: 'file', fileName: req.file.originalname, content })
   } catch (err) {
     res.status(400).json({ message: err.message })

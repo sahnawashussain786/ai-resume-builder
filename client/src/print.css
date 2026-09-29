@@ -1,0 +1,22 @@
+@media print {
+  body.printing-resume * {
+    visibility: hidden !important;
+  }
+  body.printing-resume .resume-page,
+  body.printing-resume .resume-page * {
+    visibility: visible !important;
+  }
+  body.printing-resume .resume-page {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
