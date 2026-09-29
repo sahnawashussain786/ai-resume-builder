@@ -1,0 +1,9 @@
+{
+  "name": "ai-resume-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MERN AI resume builder - one-command dev launcher",
+  "scripts": {
+    "dev": "cmd /c .\\dev.bat"
+  }
+}
