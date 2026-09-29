@@ -245,7 +245,7 @@ export default function Builder() {
               </SectionCard>
 
               <SectionCard title="Custom sections">
-                <CustomSectionsEditor items={content.custom} onChange={(next) => setContent((c) => ({ ...c, custom: next }))} />
+                <CustomSectionsEditor sections={content.custom || []} onChange={(next) => setContent((c) => ({ ...c, custom: next }))} />
               </SectionCard>
             </>
           )}

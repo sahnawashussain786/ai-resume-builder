@@ -43,8 +43,17 @@ async function connectMongo(attempt = 1) {
   }
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
   console.log(`AI provider: ${process.env.AI_API_KEY ? `configured (${process.env.AI_MODEL || 'gpt-4o-mini'})` : 'not configured — using built-in local generator'}`)
   connectMongo()
+})
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Another server instance is probably running.`)
+    console.error('   Fix: kill the other process (or set PORT=5001 in server/.env), then restart.')
+    process.exit(1)
+  }
+  throw err
 })

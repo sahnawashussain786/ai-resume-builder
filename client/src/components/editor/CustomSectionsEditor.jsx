@@ -1,11 +1,12 @@
 import { inputCls, labelCls, RemoveBtn } from './shared.jsx'
 
-export default function CustomSectionsEditor({ sections, onChange }) {
-  const updateSection = (i, patch) => onChange(sections.map((s, j) => (j === i ? { ...s, ...patch } : s)))
+export default function CustomSectionsEditor({ sections = [], onChange }) {
+  const items = Array.isArray(sections) ? sections : []
+  const updateSection = (i, patch) => onChange(items.map((s, j) => (j === i ? { ...s, ...patch } : s)))
 
   return (
     <div className="space-y-4">
-      {sections.map((s, i) => (
+      {items.map((s, i) => (
         <div key={i} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <div className="mb-3 flex items-center gap-2">
             <input
@@ -14,7 +15,7 @@ export default function CustomSectionsEditor({ sections, onChange }) {
               onChange={(e) => updateSection(i, { heading: e.target.value })}
               className={`${inputCls} font-semibold`}
             />
-            <RemoveBtn onClick={() => onChange(sections.filter((_, j) => j !== i))} />
+            <RemoveBtn onClick={() => onChange(items.filter((_, j) => j !== i))} />
           </div>
           <div className="space-y-3">
             {s.items.map((it, j) => {
@@ -66,7 +67,7 @@ export default function CustomSectionsEditor({ sections, onChange }) {
         </div>
       ))}
       <button
-        onClick={() => onChange([...sections, { heading: '', items: [] }])}
+        onClick={() => onChange([...items, { heading: '', items: [] }])}
         className="w-full rounded-xl border-2 border-dashed border-slate-300 py-3 text-sm font-semibold text-slate-500 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-600"
       >
         + Add custom section
