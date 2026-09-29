@@ -88,7 +88,7 @@ function parseExperience(lines) {
       if (current) jobs.push(current)
       // e.g. "Software Engineer at Acme Corp    Jan 2020 - Present"
       const titlePart = line.replace(range.matched, '').trim() || line
-      const m = titlePart.match(/^(.*?)\s*(?:\||–|-|—|at|,@)\s*(.+)$/) || [null, titlePart, '']
+      const m = titlePart.match(/^(.*?)(?:\s*[|–—]\s*|\s*,\s*|\s+at\s+|\s+@\s*)(.+)$/) || [null, titlePart, '']
       const [rolePart = titlePart, companyPart = ''] = m.slice(1)
       current = {
         role: rolePart.replace(/[-–—|,]\s*$/, '').trim(),

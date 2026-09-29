@@ -21,7 +21,7 @@ function DateRange({ start, end }) {
   )
 }
 
-function useBulletsOf(item) {
+function bulletsOf(item) {
   return (item.bullets && item.bullets.length ? item.bullets : item.description ? [item.description] : []).filter(Boolean)
 }
 
@@ -56,7 +56,7 @@ function Modern({ c }) {
             </div>
             <div className="text-xs font-semibold text-slate-600">{[e.company, e.location].filter(Boolean).join(' • ')}</div>
             <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-              {useBulletsOf(e).map((t, j) => (
+              {bulletsOf(e).map((t, j) => (
                 <li key={j}>{t}</li>
               ))}
             </ul>
@@ -71,7 +71,7 @@ function Modern({ c }) {
               {p.link && <span className="text-[11px] text-slate-500">{p.link}</span>}
             </div>
             <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-              {useBulletsOf(p).map((t, j) => (
+              {bulletsOf(p).map((t, j) => (
                 <li key={j}>{t}</li>
               ))}
             </ul>
@@ -139,7 +139,7 @@ function Classic({ c }) {
                 <DateRange start={e.start} end={e.end} />
               </div>
               <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                {useBulletsOf(e).map((t, j) => (
+                {bulletsOf(e).map((t, j) => (
                   <li key={j}>{t}</li>
                 ))}
               </ul>
@@ -164,7 +164,7 @@ function Classic({ c }) {
                 <span className="text-sm font-bold">{p.name}</span>
                 {p.link && <span className="text-[11px] text-slate-500"> — {p.link}</span>}
                 <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                  {useBulletsOf(p).map((t, j) => (
+                  {bulletsOf(p).map((t, j) => (
                     <li key={j}>{t}</li>
                   ))}
                 </ul>
@@ -204,7 +204,7 @@ function Minimal({ c }) {
               <div className="text-sm font-bold text-slate-900">{e.role}</div>
               <div className="text-xs text-slate-600">{[e.company, e.location].filter(Boolean).join(' · ')}</div>
               <ul className="mt-1 space-y-0.5 text-xs text-slate-700">
-                {useBulletsOf(e).map((t, j) => (
+                {bulletsOf(e).map((t, j) => (
                   <li key={j}>– {t}</li>
                 ))}
               </ul>
@@ -306,7 +306,7 @@ function Sidebar({ c }) {
                 {[e.company, e.location].filter(Boolean).join(' · ')} <span className="font-normal text-slate-400">| {e.start}{e.start && e.end ? ' – ' : ''}{e.end || 'Present'}</span>
               </div>
               <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                {useBulletsOf(e).map((t, j) => (
+                {bulletsOf(e).map((t, j) => (
                   <li key={j}>{t}</li>
                 ))}
               </ul>
@@ -319,7 +319,7 @@ function Sidebar({ c }) {
               <span className="text-sm font-bold text-slate-900">{p.name}</span>
               {p.link && <span className="text-[11px] text-slate-500"> · {p.link}</span>}
               <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-slate-700">
-                {useBulletsOf(p).map((t, j) => (
+                {bulletsOf(p).map((t, j) => (
                   <li key={j}>{t}</li>
                 ))}
               </ul>
@@ -370,7 +370,7 @@ function Elegant({ c }) {
             </div>
             <div className="text-xs text-slate-600">{[e.company, e.location].filter(Boolean).join(' · ')}</div>
             <ul className="mt-1 space-y-0.5 text-xs text-slate-700">
-              {useBulletsOf(e).map((t, j) => (
+              {bulletsOf(e).map((t, j) => (
                 <li key={j}>· {t}</li>
               ))}
             </ul>

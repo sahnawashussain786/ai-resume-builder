@@ -13,21 +13,36 @@ const app = express()
 app.use(express.json({ limit: '10mb' }))
 app.use(cors())
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
+app.get('/api/health', (req, res) => res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' }))
 app.use('/api/users', userRoutes)
 app.use('/api/resumes', resumeRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/upload', uploadRoutes)
 
-const PORT = process.env.PORT || 5000
+// Central error handler (e.g. multer file-type errors)
+app.use((err, req, res, next) => {
+  res.status(err.status || 400).json({ message: err.message || 'Request failed' })
+})
+
+const PORT = process.env.PORT && process.env.PORT !== '0' ? Number(process.env.PORT) : 5000
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/resume-builder'
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
-  })
-  .catch((err) => {
-    console.error('MongoDB connection failed:', err.message)
-    process.exit(1)
-  })
+async function connectMongo(attempt = 1) {
+  try {
+    await mongoose.connect(MONGO_URI)
+    console.log('✅ MongoDB connected')
+  } catch (err) {
+    console.error(`❌ MongoDB connection failed (attempt ${attempt}): ${err.message}`)
+    console.error('   Accounts & resume saving need MongoDB. AI generation and file parsing still work.')
+    console.error('   Set MONGO_URI in server/.env (Atlas) or run `docker compose up -d mongo` in the project root.')
+    if (attempt < 5) {
+      setTimeout(() => connectMongo(attempt + 1), 5000 * attempt)
+    }
+  }
+}
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`AI provider: ${process.env.AI_API_KEY ? `configured (${process.env.AI_MODEL || 'gpt-4o-mini'})` : 'not configured — using built-in local generator'}`)
+  connectMongo()
+})

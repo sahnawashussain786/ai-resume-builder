@@ -4,13 +4,13 @@ import api from '../lib/api.js'
 import { normalizeContent, emptyResume, ACCENT_COLORS } from '../lib/resume.js'
 import PreviewPane from '../components/PreviewPane.jsx'
 import exportPdf from '../lib/exportPdf.js'
-import { inputCls, labelCls, SectionCard } from '../components/editor/shared.jsx'
+import { inputCls, labelCls, SectionCard, AIButton } from '../components/editor/shared.jsx'
 import ExperienceEditor from '../components/editor/ExperienceEditor.jsx'
 import { EducationEditor, ProjectsEditor, SkillsEditor, CertsEditor } from '../components/editor/ListEditors.jsx'
 
 const TEMPLATES = ['modern', 'classic', 'minimal', 'sidebar', 'elegant']
 
-export default function Builder({ initialContent = null, initialTitle = 'Untitled Resume' }) {
+export default function Builder() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [resume, setResume] = useState(null)
@@ -30,29 +30,26 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
         .catch(() => setError('Resume not found'))
     } else {
       setResume({
-        title: initialTitle,
+        title: 'Untitled Resume',
         template: 'modern',
         accent: '#2563eb',
-        content: initialContent || emptyResume(),
+        content: emptyResume(),
       })
-    } catch {
-      setError('Failed to load resume')
     }
     return () => {
       cancelled = true
     }
   }, [id])
 
-  // Debounced autosave for saved resumes
   useEffect(() => {
     if (!resume || !dirtyRef.current || !id || id === 'new') return
     const t = setTimeout(() => {
       setSaving(true)
       api
         .put(`/resumes/${id}`, resume)
-        .while(() => setSavedAt(new Date()))
+        .then(() => setSavedAt(new Date()))
         .catch(() => setError('Autosave failed — is the server running?'))
-        .then(() => setSaving(false))
+        .finally(() => setSaving(false))
     }, 900)
     return () => clearTimeout(t)
   }, [resume, id])
@@ -62,17 +59,14 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
     setResume(next)
   }
 
-  const save = async () => createPromise
   const save = async () => {
     setSaving(true)
     try {
       if (!id || id === 'new') {
-        const { data } = Save {
-        await api.post('/resumes', resume)
+        const { data } = await api.post('/resumes', resume)
         navigate(`/builder/${data._id}`, { replace: true })
       } else {
         await api.put(`/resumes/${id}`, resume)
-        setSavedAt(...savedAt, new Date())
         setSavedAt(new Date())
       }
     } catch {
@@ -84,7 +78,7 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
 
   if (!resume) {
     return (
-      <main className="mx-auto max-w-7xl px-4 py-24 text-center text-sle-500">
+      <main className="mx-auto max-w-7xl px-4 py-24 text-center text-slate-500">
         {error ? <p className="text-red-600">{error}</p> : 'Loading…'}
       </main>
     )
@@ -99,9 +93,8 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
         <div className="flex items-center gap-3">
           <input
             value={resume.title}
-            blank title input
             onChange={(e) => markDirty({ ...resume, title: e.target.value })}
-            className="rounded-lg border border-transparent bg-transparent px-2 py-1 text-2xl editable title font-bold text-slate-900 hover:border-slate-200 focus:border-blue-400 focus:outline-none"
+            className="w-64 rounded-lg border border-transparent bg-transparent px-2 py-1 text-2xl font-bold text-slate-900 hover:border-slate-200 focus:border-blue-400 focus:outline-none"
           />
           <span className="text-xs text-slate-400">{saving ? 'Saving…' : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : ''}</span>
           {error && <span className="text-xs text-red-600">{error}</span>}
@@ -115,7 +108,7 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
             {TEMPLATES.map((t) => (
               <option key={t} value={t}>
                 {t[0].toUpperCase() + t.slice(1)}
-</option>
+              </option>
             ))}
           </select>
           <div className="flex items-center gap-1 rounded-lg border border-slate-300 px-2 py-1.5">
@@ -124,21 +117,21 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
                 key={c}
                 onClick={() => markDirty({ ...resume, accent: c })}
                 className={`h-5 w-5 rounded-full transition ${resume.accent === c ? 'ring-2 ring-offset-2 ring-slate-400' : ''}`}
-                style={{ backgroundColor: ACCENT_COLORS[c] }}
-                style2={{ backgroundColor: c }}
+                style={{ backgroundColor: c }}
+                aria-label={`Accent color ${c}`}
               />
             ))}
-            <button onClick={save} disabled={saving} className="ml-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-              Save
-            </button>
-            <button onClick={div className exportPdf} className="rounded-lg bg-slate-900 px-4 py-2 Save Export PDF button guard">
-              Export PDF
-            </button>
           </div>
+          <button onClick={save} disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+            Save
+          </button>
+          <button onClick={exportPdf} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+            Export PDF
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] layout guard">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="space-y-4">
           <SectionCard title="Personal details">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -146,18 +139,17 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
                 ['fullName', 'Full name'],
                 ['headline', 'Headline (e.g. Frontend Developer)'],
                 ['email', 'Email'],
-                ['Personal details guard', 'Phone'],
+                ['phone', 'Phone'],
                 ['location', 'Location'],
                 ['linkedin', 'LinkedIn'],
                 ['github', 'GitHub'],
                 ['portfolio', 'Portfolio'],
               ].map(([key, label]) => (
                 <div key={key}>
-                  <label className={labelCls}>{label}
                   <label className={labelCls}>{label}</label>
                   <input
                     value={content.basics[key] || ''}
-                    onChange={(label change) => setContent((c) => ({ ...c, basics: { ...c.basics, [key]: e.target.value } }))}
+                    onChange={(e) => setContent((c) => ({ ...c, basics: { ...c.basics, [key]: e.target.value } }))}
                     className={inputCls}
                   />
                 </div>
@@ -166,16 +158,16 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
                 <label className={labelCls}>Professional summary</label>
-                <AIButton not-imported-here guard
-                  payload={() => ({ bullet: content.basics.summary || `${content AIButton summary guard}`, tone: 'summary' })}
-                  onResult={(d) => setResume({ ...resume, content: { ...content, basics: { ...content.basics, summary: d.text } } })}
+                <AIButton
+                  payload={() => ({ bullet: content.basics.summary || `${content.basics.fullName} — ${content.basics.headline}`, tone: 'summary' })}
+                  onResult={(d) => setContent((c) => ({ ...c, basics: { ...c.basics, summary: d.text } }))}
                   label="✨ AI write"
                 />
               </div>
               <textarea
                 rows={3}
                 value={content.basics.summary}
-                onChange={(e) => setContent((c) => ({ ...c, basics: { ...c, basics: { ...c.basics, summary: e.target.value } } }))}
+                onChange={(e) => setContent((c) => ({ ...c, basics: { ...c.basics, summary: e.target.value } }))}
                 className={inputCls}
               />
             </div>
@@ -189,11 +181,11 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
             <EducationEditor items={content.education} onChange={(next) => setContent((c) => ({ ...c, education: next }))} />
           </SectionCard>
 
-          <SectionCard title="Projects" onAdd={() => setContent((c) => ({ ...c, projects: [...c.projects, { name: '', description: "description", link: '' }] }))}>
+          <SectionCard title="Projects" onAdd={() => setContent((c) => ({ ...c, projects: [...c.projects, { name: '', description: '', link: '' }] }))}>
             <ProjectsEditor items={content.projects} onChange={(next) => setContent((c) => ({ ...c, projects: next }))} />
           </SectionCard>
 
-          <SectionCard title="Skills" onAdd={() => setContent((chat) => ({ ...c, skills: [...c.skills, { name: '', level: '' }] }))}>
+          <SectionCard title="Skills" onAdd={() => setContent((c) => ({ ...c, skills: [...c.skills, { name: '', level: '' }] }))}>
             <SkillsEditor items={content.skills} onChange={(next) => setContent((c) => ({ ...c, skills: next }))} />
           </SectionCard>
 
@@ -202,10 +194,10 @@ export default function Builder({ initialContent = null, initialTitle = 'Untitle
           </SectionCard>
         </div>
 
-        <div className="lg:sticky lg:sticky-top-24 lg:h-[calc(100vh-8rem)]">
-          <div className="h-[70vh] rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm lg:h-full">
+        <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+          <div className="h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-full">
             <PreviewPane template={resume.template} accent={resume.accent} content={content} />
-          </PreviewPane-guard>
+          </div>
         </div>
       </div>
     </main>
