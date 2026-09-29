@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api.js'
 import { normalizeContent } from '../lib/resume.js'
-import ResumePreview from '../components/templates/ResumeTemplates.jsx'
+import ResumePreview from '../components/templates/index.js'
 
 export default function Upload() {
   const navigate = useNavigate()

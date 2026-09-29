@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api.js'
 import { normalizeContent } from '../lib/resume.js'
-import ResumePreview from '../components/templates/ResumeTemplates.jsx'
+import ResumePreview from '../components/templates/index.js'
 import { inputCls, labelCls } from '../components/editor/shared.jsx'
+import { useToast } from '../components/Toast.jsx'
 
 export default function AIStudio() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [form, setForm] = useState({ role: '', experienceLevel: 'mid', skills: '', rawText: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,8 +39,10 @@ export default function AIStudio() {
         title: `${form.role || 'AI'} Resume`,
         template: 'modern',
         accent: '#2563eb',
+        font: 'sans',
         content: result,
       })
+      toast('Resume created — happy editing!', 'success')
       navigate(`/builder/${data._id}`)
     } catch {
       setError('Save failed — is the server running?')

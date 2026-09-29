@@ -10,6 +10,7 @@
  *   education: [{ degree, school, location, start, end, notes }],
  *   projects: [{ name, description, link, bullets }],
  *   certifications: [{ name, issuer, year }],
+ *   custom: [{ heading, items: [{ title, subtitle, start, end, bullets, description }] }],
  * }
  */
 
@@ -32,7 +33,6 @@ export function normalizeBasics(raw = {}) {
   for (const key of Object.keys(EMPTY_BASICS)) {
     if (raw[key] != null) b[key] = str(raw[key])
   }
-  // common AI/extractor variants
   if (!b.fullName && raw.name) b.fullName = str(raw.name)
   if (!b.headline && raw.title) b.headline = str(raw.title)
   if (!b.summary && raw.objective) b.summary = str(raw.objective)
@@ -77,6 +77,20 @@ function normalizeCertItem(it = {}) {
   return { name: str(it.name ?? it.title), issuer: str(it.issuer ?? it.organization), year: str(it.year ?? it.date) }
 }
 
+function normalizeCustomSection(s = {}) {
+  return {
+    heading: str(s.heading ?? s.title ?? s.name) || 'Custom Section',
+    items: (Array.isArray(s.items) ? s.items : Array.isArray(s) ? s : []).map((it) => ({
+      title: str(it?.title),
+      subtitle: str(it?.subtitle),
+      start: str(it?.start),
+      end: str(it?.end),
+      description: str(it?.description ?? it?.summary),
+      bullets: Array.isArray(it?.bullets) ? it.bullets.map(str).filter(Boolean) : [],
+    })),
+  }
+}
+
 export function normalizeContent(raw = {}) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const arr = (v) => (Array.isArray(v) ? v : [])
@@ -87,5 +101,6 @@ export function normalizeContent(raw = {}) {
     education: arr(r.education).map(normalizeEducationItem).filter((e) => e.degree || e.school),
     projects: arr(r.projects).map(normalizeProjectItem).filter((p) => p.name || p.description),
     certifications: arr(r.certifications).map(normalizeCertItem).filter((c) => c.name),
+    custom: arr(r.custom).map(normalizeCustomSection).filter((s) => s.heading),
   }
 }

@@ -6,6 +6,7 @@ import resumeRoutes from './routes/resumeRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
+import publicRoutes from './routes/publicRoutes.js'
 
 dotenv.config()
 
@@ -18,6 +19,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/resumes', resumeRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/public', publicRoutes)
 
 // Central error handler (e.g. multer file-type errors)
 app.use((err, req, res, next) => {

@@ -7,22 +7,22 @@
 
 import { normalizeContent } from './normalize.js'
 
-const BASE_URL = process.env.AI_BASE_URL || 'https://api.openai.com/v1'
-const API_KEY = process.env.AI_API_KEY || ''
-const MODEL = process.env.AI_MODEL || 'gpt-4o-mini'
+const BASE_URL = () => process.env.AI_BASE_URL || 'https://api.openai.com/v1'
+const API_KEY = () => process.env.AI_API_KEY || ''
+const MODEL = () => process.env.AI_MODEL || 'gpt-4o-mini'
 
-export const aiConfigured = Boolean(API_KEY)
+export const aiConfigured = Boolean(process.env.AI_API_KEY)
 
 async function chat(messages, { json = false, temperature = 0.7 } = {}) {
-  if (!API_KEY) throw new Error('AI_NOT_CONFIGURED')
-  const res = await fetch(`${BASE_URL}/chat/completions`, {
+  if (!API_KEY()) throw new Error('AI_NOT_CONFIGURED')
+  const res = await fetch(`${BASE_URL()}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${API_KEY()}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: MODEL(),
       messages,
       temperature,
       ...(json ? { response_format: { type: 'json_object' } } : {}),
@@ -114,7 +114,7 @@ export async function generateResumeContent(input) {
     return { source: 'ai', content: normalizeContent(extractJson(text)) }
   } catch (err) {
     console.error('AI generation failed, using local fallback:', err.message)
-    return { source: 'local', content: localGenerateResume({ role, experienceLevel, skills, rawText }) }
+    return { source: 'local', content: normalizeContent(localGenerateResume({ role, experienceLevel, skills, rawText })) }
   }
 }
 
@@ -156,27 +156,82 @@ export async function scoreResume(content) {
   }
 }
 
-function localScore(content = {}) {
-  const tips = []
-  let score = 40
-  const basics = content.basics || {}
-  if (basics.fullName) score += 5
-  else tips.push('Add your full name at the top.')
-  if (basics.email) score += 5
-  else tips.push('Add a professional email address.')
-  if (basics.summary && basics.summary.length > 60) score += 10
-  else tips.push('Write a 2–3 sentence professional summary.')
-  const exp = content.experience || []
-  score += Math.min(exp.length * 8, 16)
-  const bullety = exp.every((e) => (e.bullets || []).length > 0)
-  if (exp.length && bullety) score += 10
-  else tips.push('Add 3–5 bullet points under each role, starting with action verbs.')
-  if ((content.skills || []).length >= 5) score += 10
-  else tips.push('List at least 5 relevant skills.')
-  if ((content.projects || []).length > 0) score += 8
-  else tips.push('Add 1–2 notable projects with links.')
-  if ((content.education || []).length > 0) score += 6
-  else tips.push('Add your education history.')
-  score = Math.max(10, Math.min(96, score))
-  return { source: 'local', score, summary: 'Rule-based review: completeness and structure checks.', tips: tips.slice(0, 5) }
+export async function generateCoverLetter({ fullName, role, company, jobDescription, resumeText }) {
+  const who = fullName || 'the candidate'
+  if (!aiConfigured) {
+    const skillsLine = (resumeText || '').match(/skills?\s*:?\s*([^\n]+)/i)?.[1] || 'the core requirements of the role'
+    return {
+      source: 'local',
+      text:
+        `Dear Hiring Manager,\n\n` +
+        `I am excited to apply for the ${role || 'open'} position${company ? ` at ${company}` : ''}. ` +
+        `With hands-on experience across ${skillsLine.trim().slice(0, 120)}, my background aligns closely with what your team is building.\n\n` +
+        `In my recent work I have delivered measurable results — shipping reliable features, improving performance, and collaborating across teams to move products forward. ` +
+        (jobDescription ? `The role's emphasis on ${jobDescription.slice(0, 140)}… matches exactly the challenges I enjoy. ` : '') +
+        `I would welcome the chance to bring this experience to ${company || 'your team'} and contribute from day one.\n\n` +
+        `Thank you for your time and consideration.\n\nSincerely,\n${who}`,
+    }
+  }
+  try {
+    const text = await chat(
+      [
+        {
+          role: 'system',
+          content:
+            'You are an expert cover letter writer. Write a compelling, specific 250-350 word cover letter in plain text. Structure: greeting, hook tied to the company/role, evidence paragraph with achievements from the resume, closing with call to action, sign-off. No markdown, no placeholder brackets.',
+        },
+        {
+          role: 'user',
+          content: `Candidate: ${who}. Role: ${role || 'unspecified'}. Company: ${company || 'unspecified'}. Job description: ${jobDescription || 'not provided'}. Resume content: ${(resumeText || '').slice(0, 6000)}`,
+        },
+      ],
+      { temperature: 0.7 },
+    )
+    return { source: 'ai', text: text.trim() }
+  } catch (err) {
+    console.error('Cover letter AI failed:', err.message)
+    return { source: 'local', text: `Dear Hiring Manager,\n\nI am excited to apply for the ${role || 'open'} position${company ? ` at ${company}` : ''}.\n\nSincerely,\n${who}` }
+  }
+}
+
+export async function tailorResume(content, jobDescription) {
+  if (!aiConfigured) {
+    const jdWords = (jobDescription || '').toLowerCase().match(/[a-z][a-z+#.]{2,}/g) || []
+    const stop = new Set(['and', 'the', 'with', 'for', 'you', 'our', 'will', 'are', 'have', 'this', 'that', 'from', 'your', 'role', 'team', 'work', 'who', 'job', 'able', 'must', 'plus', 'all', 'any', 'can', 'not', 'but', 'its', "it's"])
+    const freq = {}
+    for (const w of jdWords) if (!stop.has(w) && w.length > 2) freq[w] = (freq[w] || 0) + 1
+    const keywords = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([w]) => w)
+    const mySkills = JSON.stringify(content?.skills || []).toLowerCase() + ' ' + JSON.stringify(content?.experience || []).toLowerCase()
+    const missing = keywords.filter((k) => !mySkills.includes(k))
+    return {
+      source: 'local',
+      analysis: {
+        keywords,
+        missing,
+        suggestions: missing.length
+          ? missing.slice(0, 5).map((k) => `Consider adding "${k}" to your skills or a bullet if you have relevant experience.`)
+          : ['Great overlap with the job description — your resume covers the key terms.'],
+      },
+    }
+  }
+  try {
+    const text = await chat(
+      [
+        {
+          role: 'system',
+          content:
+            'You are an ATS optimization expert. Compare the resume against the job description. Return ONLY JSON: {"keywords":["top JD keywords"],"missing":["resume keywords missing"],"suggestions":["3-5 concrete edits, e.g. rewrite X bullet to include Y"]}',
+        },
+        { role: 'user', content: `Job description: ${(jobDescription || '').slice(0, 4000)}\n\nResume JSON: ${JSON.stringify(content).slice(0, 6000)}` },
+      ],
+      { json: true, temperature: 0.4 },
+    )
+    return { source: 'ai', analysis: extractJson(text) }
+  } catch (err) {
+    console.error('Tailor AI failed:', err.message)
+    return { source: 'local', analysis: { keywords: [], missing: [], suggestions: ['AI unavailable — check server logs.'] } }
+  }
 }

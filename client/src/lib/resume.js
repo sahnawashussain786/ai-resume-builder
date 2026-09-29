@@ -20,6 +20,7 @@ export function emptyResume() {
     education: [],
     projects: [],
     certifications: [],
+    custom: [],
   }
 }
 
@@ -72,6 +73,20 @@ function normalizeCertItem(it = {}) {
   return { name: str(it.name ?? it.title), issuer: str(it.issuer ?? it.organization), year: str(it.year ?? it.date) }
 }
 
+function normalizeCustomSection(s = {}) {
+  return {
+    heading: str(s.heading ?? s.title ?? s.name) || 'Custom Section',
+    items: (Array.isArray(s.items) ? s.items : []).map((it) => ({
+      title: str(it?.title),
+      subtitle: str(it?.subtitle),
+      start: str(it?.start),
+      end: str(it?.end),
+      description: str(it?.description ?? it?.summary),
+      bullets: Array.isArray(it?.bullets) ? it.bullets.map(str).filter(Boolean) : [],
+    })),
+  }
+}
+
 export function normalizeContent(raw = {}) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const arr = (v) => (Array.isArray(v) ? v : [])
@@ -82,7 +97,86 @@ export function normalizeContent(raw = {}) {
     education: arr(r.education).map(normalizeEducationItem).filter((e) => e.degree || e.school),
     projects: arr(r.projects).map(normalizeProjectItem).filter((p) => p.name || p.description),
     certifications: arr(r.certifications).map(normalizeCertItem).filter((c) => c.name),
+    custom: arr(r.custom).map(normalizeCustomSection).filter((s) => s.heading),
   }
 }
 
-export const ACCENT_COLORS = ['#2563eb', '#0f766e', '#7c3aed', '#b91c1c', '#b45309', '#0e7490', '#be185d', '#374151']
+/* ------------------------------ Design options ----------------------------- */
+
+export const ACCENT_COLORS = [
+  '#2563eb', '#0f766e', '#7c3aed', '#b91c1c', '#b45309', '#0e7490', '#be185d', '#374151',
+  '#16a34a', '#ea580c', '#4f46e5', '#0d9488',
+]
+
+export const FONTS = [
+  { id: 'sans', name: 'Inter / System', stack: "'Segoe UI', system-ui, -apple-system, sans-serif" },
+  { id: 'serif', name: 'Georgia Serif', stack: "Georgia, 'Times New Roman', serif" },
+  { id: 'mono', name: 'Monospace', stack: "ui-monospace, 'Cascadia Code', Consolas, monospace" },
+  { id: 'rounded', name: 'Rounded (Verdana)', stack: "'Segoe UI', Verdana, Tahoma, sans-serif" },
+]
+
+export const TEMPLATE_IDS = ['modern', 'classic', 'minimal', 'sidebar', 'elegant', 'timeline', 'compact', 'bold']
+export const SECTION_KEYS = ['summary', 'experience', 'education', 'projects', 'skills', 'certifications', 'custom']
+export const LAYOUTS = [
+  { id: 'one-column', name: 'One column' },
+  { id: 'two-column', name: 'Two column' },
+]
+
+/* ------------------------------ Derived data ------------------------------- */
+
+export function resumeCompleteness(content) {
+  const checks = []
+  const b = content?.basics || {}
+  checks.push({ label: 'Personal details', ok: Boolean(b.fullName && b.email), weight: 15 })
+  checks.push({ label: 'Headline', ok: Boolean(b.headline), weight: 5 })
+  checks.push({ label: 'Professional summary (40+ chars)', ok: (b.summary || '').length >= 40, weight: 10 })
+  checks.push({
+    label: 'Experience with bullet points',
+    ok: (content?.experience || []).some((e) => (e.bullets || []).length >= 2),
+    weight: 20,
+  })
+  checks.push({ label: 'Education', ok: (content?.education || []).length > 0, weight: 10 })
+  checks.push({ label: 'Skills (5+)', ok: (content?.skills || []).length >= 5, weight: 15 })
+  checks.push({ label: 'Projects or certifications', ok: (content?.projects || []).length > 0 || (content?.certifications || []).length > 0, weight: 10 })
+  checks.push({ label: 'Links (LinkedIn/GitHub/portfolio)', ok: Boolean(b.linkedin || b.github || b.portfolio), weight: 10 })
+  const hasWeak = (content?.experience || []).some((e) =>
+    (e.bullets || []).some((bl) => bl.length > 0 && !/^\s*(led|built|designed|developed|delivered|improved|managed|created|launched|increased|reduced|automated|optimized|owned|drove|shipped|mentored|implemented|migrated)\b/i.test(bl)),
+  )
+  if (hasWeak) checks.push({ label: 'Use strong action verbs in bullets', ok: false, weight: 5 })
+  const score = checks.filter((c) => c.ok).reduce((s, c) => s + c.weight, 0)
+  return { score: Math.min(100, score), checks }
+}
+
+export function resumeToText(content) {
+  const c = normalizeContent(content)
+  const lines = []
+  const b = c.basics
+  lines.push([b.fullName, b.headline].filter(Boolean).join(' — '))
+  lines.push([b.email, b.phone, b.location, b.linkedin, b.github, b.portfolio].filter(Boolean).join(' | '))
+  if (b.summary) lines.push('', 'SUMMARY', b.summary)
+  if (c.skills.length) lines.push('', 'SKILLS', c.skills.map((s) => s.name).join(', '))
+  if (c.experience.length) {
+    lines.push('', 'EXPERIENCE')
+    for (const e of c.experience) {
+      lines.push(`${e.role} at ${e.company} (${e.start} - ${e.end || 'Present'})`)
+      for (const bl of e.bullets) lines.push(`- ${bl}`)
+    }
+  }
+  if (c.projects.length) {
+    lines.push('', 'PROJECTS')
+    for (const p of c.projects) lines.push(`${p.name}${p.link ? ` (${p.link})` : ''}: ${p.description}`)
+  }
+  if (c.education.length) {
+    lines.push('', 'EDUCATION')
+    for (const e of c.education) lines.push(`${e.degree}, ${e.school} (${e.start} - ${e.end})`)
+  }
+  if (c.certifications.length) {
+    lines.push('', 'CERTIFICATIONS')
+    for (const cert of c.certifications) lines.push(`${cert.name}${cert.issuer ? ` — ${cert.issuer}` : ''}${cert.year ? ` (${cert.year})` : ''}`)
+  }
+  for (const s of c.custom) {
+    lines.push('', s.heading.toUpperCase())
+    for (const it of s.items) lines.push(`${it.title}${it.subtitle ? ` — ${it.subtitle}` : ''}${it.start ? ` (${it.start} - ${it.end || ''})` : ''}`)
+  }
+  return lines.join('\n')
+}
