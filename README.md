@@ -1,103 +1,66 @@
-# ResumeForge AI — MERN AI Resume Builder
+# ResumeForge AI — Full-Featured MERN AI Resume Builder
 
-A full-stack MERN resume builder with **four ways to create a resume**:
+A complete AI resume builder with **four ways to create**, **8 templates**, **AI tooling**, and **one-click PDF export**.
 
-1. ✍️ **Build manually** — guided section-by-section editor with autosave
-2. 🎨 **Start from a template** — 5 layouts (modern, classic, minimal, sidebar, elegant) + accent colors
-3. 🤖 **Generate with AI** — describe your role/skills, get a complete draft (works with OpenAI, Groq, OpenRouter, Ollama — or a built-in offline fallback)
-4. 📄 **Upload existing resume** — PDF/DOCX/TXT parsed into an editable resume
+## ✨ Features
 
-Plus: live A4 preview, AI bullet improvement, AI summary writer, resume scoring, and one-click **PDF export**.
+### Creation flows
+- ✍️ **Manual builder** — guided editor: personal details, summary, experience, education, projects, skills, certifications + **custom sections**
+- 🎨 **8 templates** — modern, classic, minimal, sidebar, elegant, timeline, compact, bold (switch anytime, content is preserved)
+- 🤖 **AI Studio** — describe your role/skills, get a full draft (works with any OpenAI-compatible API, or built-in offline generator)
+- 📄 **Upload** — PDF/DOCX/TXT parsed into an editable resume
+
+### Editor
+- Live A4 preview with zoom, autosave, toasts
+- **Design panel**: 12 accent colors, 4 font stacks, **section reordering + hide/show**
+- **Custom sections** (awards, volunteering, languages — anything)
+- **Resume strength meter** with actionable checks
+- **AI bullet/summary writer** on every text field
+- **AI resume review** — score + tips
+
+### Job hunting
+- 🎯 **Tailor to job** — paste a job description, get ATS keyword-gap analysis + edit suggestions
+- 💌 **Cover Letter Studio** — AI cover letters tailored to any job, from any of your resumes, with print-to-PDF
+- 🔗 **Share links** — publish a resume to a public URL (`/r/:id`) for recruiters, toggleable
+
+### Polish
+- 🌙 **Dark mode** across the whole app
+- Gradient landing page with animations, searchable dashboard with strength scores, duplicate/delete
 
 ## Stack
 
-| Layer    | Tech                                                                 |
-| -------- | -------------------------------------------------------------------- |
-| Frontend | React 19 + Vite, Tailwind CSS v4, React Router, Axios                |
-| Backend  | Node.js + Express, Mongoose (MongoDB), JWT auth, Multer              |
-| AI       | Any OpenAI-compatible chat API (pluggable) + local fallback engine   |
-| Parsing  | `pdf-parse` (PDF), `mammoth` (DOCX), heuristic structure extractor   |
+React 19 + Vite + Tailwind v4 + React Router · Express + Mongoose + JWT + Multer · pluggable OpenAI-compatible AI with offline fallback
 
 ## Quick start
 
-### 1. MongoDB
-
-Pick one:
-
 ```bash
-# Option A: Docker (recommended)
-docker compose up -d
+# 1. MongoDB
+docker compose up -d                      # or use Atlas URI in server/.env
 
-# Option B: MongoDB Atlas (free tier) — put your URI in server/.env
+# 2. Server
+cd server && cp .env.example .env && npm install && npm run dev   # :5000
+
+# 3. Client
+cd client && npm install && npm run dev   # :5173
 ```
 
-### 2. Server
+Or on Windows: `npm run dev` from the project root (launches both + opens browser).
 
-```bash
-cd server
-cp .env.example .env        # edit MONGO_URI / JWT_SECRET / AI key (optional)
-npm install
-npm run dev                 # http://localhost:5000
-```
+## AI keys (optional)
 
-### 3. Client
+Set in `server/.env` — the app works without one (offline fallback engine):
+- **Groq** (free): `AI_BASE_URL=https://api.groq.com/openai/v1`, `AI_MODEL=llama-3.3-70b-versatile`, key from console.groq.com/keys
+- **OpenAI**: `AI_BASE_URL=https://api.openai.com/v1`, `AI_MODEL=gpt-4o-mini`, key from platform.openai.com/api-keys
+- **OpenRouter / Ollama** also supported — see `.env.example`
 
-```bash
-cd client
-npm install
-npm run dev                 # http://localhost:5173
-```
+## API
 
-Open http://localhost:5173, register an account, and build.
-
-## AI configuration (optional)
-
-The app works **without any AI key** — a rule-based generator produces sensible
-drafts offline. To use a real model, set in `server/.env`:
-
-```env
-AI_BASE_URL=https://api.openai.com/v1   # or Groq / OpenRouter / Ollama
-AI_API_KEY=sk-...
-AI_MODEL=gpt-4o-mini
-```
-
-Any OpenAI-compatible `/chat/completions` endpoint works.
-
-## API overview
-
-| Method | Route                  | Description                          |
-| ------ | ---------------------- | ------------------------------------ |
-| POST   | `/api/users/register`  | Register (returns JWT)               |
-| POST   | `/api/users/login`     | Login (returns JWT)                  |
-| GET    | `/api/resumes`         | List my resumes                      |
-| POST   | `/api/resumes`         | Create resume                        |
-| GET/PUT/DELETE | `/api/resumes/:id` | Read / update / delete        |
-| POST   | `/api/ai/generate`     | AI resume draft from prompt          |
-| POST   | `/api/ai/improve-bullet` | Rewrite one bullet/summary         |
-| POST   | `/api/ai/score`        | Resume review + tips                 |
-| POST   | `/api/upload/resume`   | Upload PDF/DOCX/TXT → resume JSON    |
-
-## Project structure
-
-```
-server/
-  src/
-    index.js               # Express app + Mongo connection
-    middleware/auth.js     # JWT guard
-    models/                # User, Resume
-    routes/                # users, resumes, ai, upload
-    services/              # aiProvider, pdf/docx parsers, extractor, normalizer
-client/
-  src/
-    components/            # Navbar, PreviewPane, editor/, templates/
-    context/AuthContext.jsx
-    lib/                   # api client, resume normalizer, PDF export
-    pages/                 # Home, Login, Register, Dashboard, Builder,
-                           # AIStudio, Upload, Templates
-```
-
-## Notes
-
-- PDF export uses the browser's print-to-PDF (save as PDF) with dedicated print CSS — no server dependency.
-- Uploaded files are processed in memory (never stored to disk), max 5 MB.
-- Scanned/image-only PDFs can't be parsed (no OCR).
+| Route | Description |
+|---|---|
+| `POST /api/users/register·login` | JWT auth |
+| `GET/POST /api/resumes`, `GET/PUT/DELETE /api/resumes/:id` | Resume CRUD |
+| `POST /api/resumes/:id/duplicate` | Duplicate |
+| `POST /api/resumes/:id/share` | Toggle public link |
+| `GET /api/public/resumes/shared/:shareId` | Public resume view (no auth) |
+| `POST /api/ai/generate·improve-bullet·score·cover-letter·tailor` | AI endpoints |
+| `POST /api/upload/resume` | Parse PDF/DOCX/TXT |
