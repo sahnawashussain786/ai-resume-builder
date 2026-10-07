@@ -15,29 +15,30 @@
  */
 
 export const EMPTY_BASICS = {
-  fullName: '',
-  headline: '',
-  email: '',
-  phone: '',
-  location: '',
-  linkedin: '',
-  github: '',
-  portfolio: '',
-  summary: '',
-}
+  fullName: "",
+  headline: "",
+  email: "",
+  phone: "",
+  location: "",
+  linkedin: "",
+  github: "",
+  portfolio: "",
+  summary: "",
+};
 
-const str = (v) => (typeof v === 'string' ? v : v == null ? '' : String(v))
+const str = (v) => (typeof v === "string" ? v : v == null ? "" : String(v));
 
 export function normalizeBasics(raw = {}) {
-  const b = { ...EMPTY_BASICS }
+  const b = { ...EMPTY_BASICS };
   for (const key of Object.keys(EMPTY_BASICS)) {
-    if (raw[key] != null) b[key] = str(raw[key])
+    if (raw[key] != null) b[key] = str(raw[key]);
   }
-  if (!b.fullName && raw.name) b.fullName = str(raw.name)
-  if (!b.headline && raw.title) b.headline = str(raw.title)
-  if (!b.summary && raw.objective) b.summary = str(raw.objective)
-  if (!b.portfolio && (raw.website || raw.url)) b.portfolio = str(raw.website || raw.url)
-  return b
+  if (!b.fullName && raw.name) b.fullName = str(raw.name);
+  if (!b.headline && raw.title) b.headline = str(raw.title);
+  if (!b.summary && raw.objective) b.summary = str(raw.objective);
+  if (!b.portfolio && (raw.website || raw.url))
+    b.portfolio = str(raw.website || raw.url);
+  return b;
 }
 
 function normalizeExperienceItem(it = {}) {
@@ -47,8 +48,12 @@ function normalizeExperienceItem(it = {}) {
     location: str(it.location),
     start: str(it.start ?? it.startDate ?? it.from),
     end: str(it.end ?? it.endDate ?? it.to),
-    bullets: Array.isArray(it.bullets) ? it.bullets.map(str).filter(Boolean) : it.description ? [str(it.description)] : [],
-  }
+    bullets: Array.isArray(it.bullets)
+      ? it.bullets.map(str).filter(Boolean)
+      : it.description
+        ? [str(it.description)]
+        : [],
+  };
 }
 
 function normalizeEducationItem(it = {}) {
@@ -59,48 +64,78 @@ function normalizeEducationItem(it = {}) {
     start: str(it.start ?? it.startDate),
     end: str(it.end ?? it.endDate ?? it.graduationDate),
     notes: str(it.notes ?? it.gpa ?? it.details),
-  }
+  };
 }
 
 function normalizeProjectItem(it = {}) {
-  const bullets = Array.isArray(it.bullets) ? it.bullets.map(str).filter(Boolean) : []
+  const bullets = Array.isArray(it.bullets)
+    ? it.bullets.map(str).filter(Boolean)
+    : [];
   return {
     name: str(it.name ?? it.title),
     description: str(it.description),
     link: str(it.link ?? it.url),
-    bullets: bullets.length ? bullets : it.description ? [str(it.description)] : [],
-  }
+    bullets: bullets.length
+      ? bullets
+      : it.description
+        ? [str(it.description)]
+        : [],
+  };
 }
 
 function normalizeCertItem(it = {}) {
-  if (typeof it === 'string') return { name: it, issuer: '', year: '' }
-  return { name: str(it.name ?? it.title), issuer: str(it.issuer ?? it.organization), year: str(it.year ?? it.date) }
+  if (typeof it === "string") return { name: it, issuer: "", year: "" };
+  return {
+    name: str(it.name ?? it.title),
+    issuer: str(it.issuer ?? it.organization),
+    year: str(it.year ?? it.date),
+  };
 }
 
 function normalizeCustomSection(s = {}) {
   return {
-    heading: str(s.heading ?? s.title ?? s.name) || 'Custom Section',
-    items: (Array.isArray(s.items) ? s.items : Array.isArray(s) ? s : []).map((it) => ({
-      title: str(it?.title),
-      subtitle: str(it?.subtitle),
-      start: str(it?.start),
-      end: str(it?.end),
-      description: str(it?.description ?? it?.summary),
-      bullets: Array.isArray(it?.bullets) ? it.bullets.map(str).filter(Boolean) : [],
-    })),
-  }
+    heading: str(s.heading ?? s.title ?? s.name) || "Custom Section",
+    items: (Array.isArray(s.items) ? s.items : Array.isArray(s) ? s : []).map(
+      (it) => ({
+        title: str(it?.title),
+        subtitle: str(it?.subtitle),
+        start: str(it?.start),
+        end: str(it?.end),
+        description: str(it?.description ?? it?.summary),
+        bullets: Array.isArray(it?.bullets)
+          ? it.bullets.map(str).filter(Boolean)
+          : [],
+      }),
+    ),
+  };
 }
 
 export function normalizeContent(raw = {}) {
-  const r = raw && typeof raw === 'object' ? raw : {}
-  const arr = (v) => (Array.isArray(v) ? v : [])
+  const r = raw && typeof raw === "object" ? raw : {};
+  const arr = (v) => (Array.isArray(v) ? v : []);
   return {
     basics: normalizeBasics(r.basics || {}),
-    skills: arr(r.skills).map((s) => (typeof s === 'string' ? { name: s, level: '' } : { name: str(s?.name), level: str(s?.level) })).filter((s) => s.name),
-    experience: arr(r.experience).map(normalizeExperienceItem).filter((e) => e.role || e.company || e.bullets.length),
-    education: arr(r.education).map(normalizeEducationItem).filter((e) => e.degree || e.school),
-    projects: arr(r.projects).map(normalizeProjectItem).filter((p) => p.name || p.description),
-    certifications: arr(r.certifications).map(normalizeCertItem).filter((c) => c.name),
-    custom: arr(r.custom).map(normalizeCustomSection).filter((s) => s.heading),
-  }
+    skills: arr(r.skills)
+      .map((s) =>
+        typeof s === "string"
+          ? { name: s, level: "" }
+          : { name: str(s?.name), level: str(s?.level) },
+      )
+      .filter((s) => s.name),
+    experience: arr(r.experience)
+      .map(normalizeExperienceItem)
+      .filter((e) => e.role || e.company || e.bullets.length),
+    education: arr(r.education)
+      .map(normalizeEducationItem)
+      .filter((e) => e.degree || e.school),
+    projects: arr(r.projects)
+      .map(normalizeProjectItem)
+      .filter((p) => p.name || p.description),
+    certifications: arr(r.certifications)
+      .map(normalizeCertItem)
+      .filter((c) => c.name),
+    custom: arr(r.custom)
+      .map(normalizeCustomSection)
+      .filter((s) => s.heading),
+  };
 }
