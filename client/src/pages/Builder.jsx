@@ -8,16 +8,27 @@ import DesignPanel from '../components/DesignPanel.jsx'
 import TailorModal from '../components/TailorModal.jsx'
 import ShareDialog from '../components/ShareDialog.jsx'
 import exportPdf from '../lib/exportPdf.js'
-import { inputCls, labelCls, SectionCard, AIButton } from '../components/editor/shared.jsx'
+import { SectionCard, AIButton } from '../components/editor/shared.jsx'
 import ExperienceEditor from '../components/editor/ExperienceEditor.jsx'
 import { EducationEditor, ProjectsEditor, SkillsEditor, CertsEditor } from '../components/editor/ListEditors.jsx'
 import CustomSectionsEditor from '../components/editor/CustomSectionsEditor.jsx'
 import { useToast } from '../components/Toast.jsx'
 
 const TABS = [
-  { id: 'content', label: '📝 Content' },
-  { id: 'design', label: '🎨 Design' },
-  { id: 'tools', label: '🤖 AI tools' },
+  { id: 'content', label: 'Content', accent: 'var(--blue)' },
+  { id: 'design', label: 'Design', accent: 'var(--accent)' },
+  { id: 'tools', label: 'AI tools', accent: 'var(--accent-2)' },
+]
+
+const FIELDS = [
+  ['fullName', 'Full name'],
+  ['headline', 'Headline'],
+  ['email', 'Email'],
+  ['phone', 'Phone'],
+  ['location', 'Location'],
+  ['linkedin', 'LinkedIn'],
+  ['github', 'GitHub'],
+  ['portfolio', 'Portfolio'],
 ]
 
 export default function Builder() {
@@ -34,6 +45,11 @@ export default function Builder() {
   const [score, setScore] = useState(null)
   const [scoring, setScoring] = useState(false)
   const dirtyRef = useRef(false)
+  const keyRef = useRef(0)
+
+  useEffect(() => {
+    keyRef.current += 1
+  }, [id])
 
   useEffect(() => {
     let cancelled = false
@@ -45,7 +61,13 @@ export default function Builder() {
         })
         .catch(() => setError('Resume not found'))
     } else {
-      setResume({ title: 'Untitled Resume', template: 'modern', accent: '#2563eb', font: 'sans', content: emptyResume() })
+      setResume({
+        title: 'Untitled Resume',
+        template: 'modern',
+        accent: '#6c5ce7',
+        font: 'sans',
+        content: emptyResume(),
+      })
     }
     return () => {
       cancelled = true
@@ -95,7 +117,9 @@ export default function Builder() {
   const runScore = async () => {
     setScoring(true)
     try {
-      const { data } = await api.post('/ai/score', { content: normalizeContent(resume.content) })
+      const { data } = await api.post('/ai/score', {
+        content: normalizeContent(resume.content),
+      })
       setScore(data)
     } catch {
       toast('AI score failed', 'error')
@@ -106,152 +130,290 @@ export default function Builder() {
 
   if (!resume) {
     return (
-      <main className="mx-auto max-w-7xl px-4 py-24 text-center text-slate-500 dark:text-slate-400">
-        {error ? <p className="text-red-600">{error}</p> : 'Loading…'}
+      <main className="flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-sm" style={{ color: 'var(--text-1)' }}>
+          <span className="h-5 w-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+          Loading editor…
+        </div>
       </main>
     )
   }
 
   const content = normalizeContent(resume.content)
-  const setContent = (updater) => markDirty({ ...resume, content: updater(normalizeContent(resume.content)) })
+  const setContent = (updater) =>
+    markDirty({ ...resume, content: updater(normalizeContent(resume.content)) })
+
+  const accent = resume.accent || '#6c5ce7'
 
   return (
-    <main className="mx-auto max-w-[1600px] px-4 py-6">
+    <main key={keyRef.current} className="animate-fade-in">
       {/* Toolbar */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <input
-            value={resume.title}
+            value={resume.title || ''}
             onChange={(e) => markDirty({ ...resume, title: e.target.value })}
-            className="w-64 rounded-lg border border-transparent bg-transparent px-2 py-1 text-2xl font-bold text-slate-900 hover:border-slate-200 focus:border-blue-400 focus:outline-none dark:text-white"
+            className="input input-mono min-w-0 flex-1 text-sm font-semibold"
+            placeholder="Resume title…"
           />
-          <span className="text-xs text-slate-400">{saving ? 'Saving…' : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : ''}</span>
-          {error && <span className="text-xs text-red-600">{error}</span>}
+          <span className="shrink-0 text-xs font-mono" style={{ color: 'var(--text-2)' }}>
+            {saving ? (
+              'saving…'
+            ) : savedAt ? (
+              `saved ${savedAt.toLocaleTimeString()}`
+            ) : 'unsaved'}
+          </span>
+          {error && (
+            <span className="shrink-0 text-xs" style={{ color: 'var(--red)' }}>
+              {error}
+            </span>
+          )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowTailor(true)}
-            className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+            className="btn btn-ghost btn-sm"
           >
-            🎯 Tailor to job
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="3" />
+              <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" />
+              <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" />
+              <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" />
+              <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" />
+            </svg>
+            Tailor to job
           </button>
           {id && id !== 'new' && (
             <button
               onClick={() => setShowShare(true)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="btn btn-ghost btn-sm"
             >
-              🔗 Share
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              Share
             </button>
           )}
+          <div className="w-px h-6" style={{ background: 'var(--border-1)' }} />
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="btn btn-ghost btn-sm"
           >
-            Save
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            {saving ? 'Saving…' : 'Save'}
           </button>
-          <button onClick={exportPdf} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900">
+          <button
+            onClick={exportPdf}
+            className="btn btn-primary btn-sm"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
             Export PDF
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+      <div className="tabs mb-6">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-              tab === t.id ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
+            className={`tab ${tab === t.id ? 'active' : ''}`}
           >
+            <span
+              className="tab-indicator"
+              style={tab === t.id ? { background: t.accent } : {}}
+            />
             {t.label}
           </button>
         ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <div className="space-y-4">
+        {/* Left: editors */}
+        <div className="space-y-5">
           {tab === 'content' && (
             <>
-              <SectionCard title="Personal details">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    ['fullName', 'Full name'],
-                    ['headline', 'Headline (e.g. Frontend Developer)'],
-                    ['email', 'Email'],
-                    ['phone', 'Phone'],
-                    ['location', 'Location'],
-                    ['linkedin', 'LinkedIn'],
-                    ['github', 'GitHub'],
-                    ['portfolio', 'Portfolio'],
-                  ].map(([key, label]) => (
-                    <div key={key}>
-                      <label className={labelCls}>{label}</label>
+              <SectionCard title="Personal details" accent={accent}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {FIELDS.map(([key, label]) => (
+                    <div key={key} className="field">
+                      <label className="field-label">{label}</label>
                       <input
                         value={content.basics[key] || ''}
-                        onChange={(e) => setContent((c) => ({ ...c, basics: { ...c.basics, [key]: e.target.value } }))}
-                        className={inputCls}
+                        onChange={(e) =>
+                          setContent((c) => ({
+                            ...c,
+                            basics: { ...c.basics, [key]: e.target.value },
+                          }))
+                        }
+                        className="input"
                       />
                     </div>
                   ))}
                 </div>
-                <div className="mt-3">
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className={labelCls}>Professional summary</label>
+                <div className="mt-4 panel">
+                  <div className="flex items-center justify-between">
+                    <label className="field-label">Professional summary</label>
                     <AIButton
-                      payload={() => ({ bullet: content.basics.summary || `${content.basics.fullName} — ${content.basics.headline}`, tone: 'summary' })}
-                      onResult={(d) => setContent((c) => ({ ...c, basics: { ...c.basics, summary: d.text } }))}
-                      label="✨ AI write"
+                      payload={() => ({
+                        bullet:
+                          content.basics.summary ||
+                          `${content.basics.fullName} — ${content.basics.headline}`,
+                        tone: 'summary',
+                      })}
+                      onResult={(d) =>
+                        setContent((c) => ({
+                          ...c,
+                          basics: { ...c.basics, summary: d.text },
+                        }))
+                      }
+                      label="AI write"
                     />
                   </div>
                   <textarea
                     rows={3}
-                    value={content.basics.summary}
-                    onChange={(e) => setContent((c) => ({ ...c, basics: { ...c.basics, summary: e.target.value } }))}
-                    className={inputCls}
+                    value={content.basics.summary || ''}
+                    onChange={(e) =>
+                      setContent((c) => ({
+                        ...c,
+                        basics: { ...c.basics, summary: e.target.value },
+                      }))
+                    }
+                    className="input mt-3"
+                    placeholder="A few lines about who you are and what you bring…"
                   />
                 </div>
               </SectionCard>
 
               <SectionCard
                 title="Experience"
-                onAdd={() => setContent((c) => ({ ...c, experience: [...c.experience, { role: '', company: '', location: '', start: '', end: '', bullets: [''] }] }))}
+                accent={accent}
+                onAdd={() =>
+                  setContent((c) => ({
+                    ...c,
+                    experience: [
+                      ...c.experience,
+                      {
+                        role: '',
+                        company: '',
+                        location: '',
+                        start: '',
+                        end: '',
+                        bullets: [''],
+                      },
+                    ],
+                  }))
+                }
               >
-                <ExperienceEditor items={content.experience} onChange={(next) => setContent((c) => ({ ...c, experience: next }))} />
+                <ExperienceEditor
+                  items={content.experience}
+                  onChange={(next) => setContent((c) => ({ ...c, experience: next }))}
+                />
               </SectionCard>
 
               <SectionCard
                 title="Education"
-                onAdd={() => setContent((c) => ({ ...c, education: [...c.education, { degree: '', school: '', location: '', start: '', end: '', notes: '' }] }))}
+                accent={accent}
+                onAdd={() =>
+                  setContent((c) => ({
+                    ...c,
+                    education: [
+                      ...c.education,
+                      {
+                        degree: '',
+                        school: '',
+                        location: '',
+                        start: '',
+                        end: '',
+                        notes: '',
+                      },
+                    ],
+                  }))
+                }
               >
-                <EducationEditor items={content.education} onChange={(next) => setContent((c) => ({ ...c, education: next }))} />
+                <EducationEditor
+                  items={content.education}
+                  onChange={(next) => setContent((c) => ({ ...c, education: next }))}
+                />
               </SectionCard>
 
-              <SectionCard title="Projects" onAdd={() => setContent((c) => ({ ...c, projects: [...c.projects, { name: '', description: '', link: '' }] }))}>
-                <ProjectsEditor items={content.projects} onChange={(next) => setContent((c) => ({ ...c, projects: next }))} />
+              <SectionCard
+                title="Projects"
+                accent={accent}
+                onAdd={() =>
+                  setContent((c) => ({
+                    ...c,
+                    projects: [...c.projects, { name: '', description: '', link: '' }],
+                  }))
+                }
+              >
+                <ProjectsEditor
+                  items={content.projects}
+                  onChange={(next) => setContent((c) => ({ ...c, projects: next }))}
+                />
               </SectionCard>
 
-              <SectionCard title="Skills" onAdd={() => setContent((c) => ({ ...c, skills: [...c.skills, { name: '', level: '' }] }))}>
-                <SkillsEditor items={content.skills} onChange={(next) => setContent((c) => ({ ...c, skills: next }))} />
+              <SectionCard
+                title="Skills"
+                accent={accent}
+                onAdd={() =>
+                  setContent((c) => ({
+                    ...c,
+                    skills: [...c.skills, { name: '', level: '' }],
+                  }))
+                }
+              >
+                <SkillsEditor
+                  items={content.skills}
+                  onChange={(next) => setContent((c) => ({ ...c, skills: next }))}
+                />
               </SectionCard>
 
               <SectionCard
                 title="Certifications"
-                onAdd={() => setContent((c) => ({ ...c, certifications: [...c.certifications, { name: '', issuer: '', year: '' }] }))}
+                accent={accent}
+                onAdd={() =>
+                  setContent((c) => ({
+                    ...c,
+                    certifications: [
+                      ...c.certifications,
+                      { name: '', issuer: '', year: '' },
+                    ],
+                  }))
+                }
               >
-                <CertsEditor items={content.certifications} onChange={(next) => setContent((c) => ({ ...c, certifications: next }))} />
+                <CertsEditor
+                  items={content.certifications}
+                  onChange={(next) => setContent((c) => ({ ...c, certifications: next }))}
+                />
               </SectionCard>
 
-              <SectionCard title="Custom sections">
-                <CustomSectionsEditor sections={content.custom || []} onChange={(next) => setContent((c) => ({ ...c, custom: next }))} />
+              <SectionCard title="Custom sections" accent={accent}>
+                <CustomSectionsEditor
+                  sections={content.custom || []}
+                  onChange={(next) => setContent((c) => ({ ...c, custom: next }))}
+                />
               </SectionCard>
             </>
           )}
 
           {tab === 'design' && (
-            <SectionCard title="Design">
+            <SectionCard title="Design" accent={accent}>
               <DesignPanel resume={resume} markDirty={markDirty} />
             </SectionCard>
           )}
@@ -259,27 +421,65 @@ export default function Builder() {
           {tab === 'tools' && (
             <>
               <CompletenessMeter content={content} onFix={() => setTab('content')} />
-              <SectionCard title="AI resume review">
+              <SectionCard title="AI resume review" accent="var(--accent-2)">
                 <button
                   onClick={runScore}
                   disabled={scoring}
-                  className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+                  className="btn btn-primary w-full"
                 >
-                  {scoring ? 'Reviewing…' : '✨ Review my resume with AI'}
+                  {scoring ? (
+                    <>
+                      <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      Reviewing…
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a4 4 0 0 1 4 4c0 2-2 3.5-4 5.5C8 11.5 8 13 9 14l6 7c1 1 2 2 3 2s2-1 3-2l6-7c1-1 1-2.5 0-3.5C18 9.5 16 8 12 8a4 4 0 0 1 4-4z" />
+                      </svg>
+                      Review my resume with AI
+                    </>
+                  )}
                 </button>
                 {score && (
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-5 space-y-4">
                     <div className="flex items-center gap-4">
-                      <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-violet-100 text-2xl font-black text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                      <div
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+                        style={{
+                          background: `linear-gradient(135deg, ${score.score >= 80 ? '#22c55e' : score.score >= 55 ? '#f59e0b' : '#ef4444'}22, ${score.score >= 80 ? '#22c55e' : score.score >= 55 ? '#f59e0b' : '#ef4444'}08)`,
+                          color:
+                            score.score >= 80
+                              ? 'var(--green)'
+                              : score.score >= 55
+                              ? 'var(--amber)'
+                              : 'var(--red)',
+                        }}
+                      >
                         {score.score}
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{score.summary}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-1)' }}>
+                        {score.summary}
+                      </p>
                     </div>
                     {score.tips?.length > 0 && (
                       <ul className="space-y-2">
                         {score.tips.map((tip, i) => (
-                          <li key={i} className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                            💡 {tip}
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 rounded-xl bg-[var(--bg-3)] p-3 text-xs"
+                            style={{ color: 'var(--text-1)' }}
+                          >
+                            <span
+                              className="shrink-0 mt-0.5 rounded-full p-0.5"
+                              style={{
+                                background: 'rgba(245,158,11,0.15)',
+                                color: 'var(--amber)',
+                              }}
+                            >
+                              💡
+                            </span>
+                            {tip}
                           </li>
                         ))}
                       </ul>
@@ -287,21 +487,33 @@ export default function Builder() {
                   </div>
                 )}
               </SectionCard>
-              <SectionCard title="Cover letter">
-                <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Generate a tailored cover letter from this resume.</p>
+              <SectionCard title="Cover letter" accent="#10b981">
+                <p className="text-xs" style={{ color: 'var(--text-1)' }}>
+                  Generate a tailored cover letter from this resume.
+                </p>
                 <button
-                  onClick={() => navigate('/cover-letter', { state: { resumeId: id } })}
-                  className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                  onClick={() =>
+                    navigate('/cover-letter', { state: { resumeId: id } })
+                  }
+                  className="btn btn-surface mt-3 w-full"
                 >
-                  Open cover letter studio →
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                    <circle cx="12" cy="14" r="2" />
+                  </svg>
+                  Open cover letter studio
                 </button>
               </SectionCard>
             </>
           )}
         </div>
 
+        {/* Right: preview */}
         <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-          <div className="h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-full dark:border-slate-700">
+          <div
+            className="h-[70vh] overflow-hidden rounded-xl border border-[var(--border-1)] bg-[var(--bg-1)] shadow-lg lg:h-full"
+            style={{ boxShadow: `0 0 0 1px var(--border-1), 0 20px 60px -20px rgba(0,0,0,0.8)` }}
+          >
             <PreviewPane
               template={resume.template}
               accent={resume.accent}
@@ -314,8 +526,16 @@ export default function Builder() {
         </div>
       </div>
 
-      <TailorModal open={showTailor} onClose={() => setShowTailor(false)} content={content} />
-      <ShareDialog open={showShare} onClose={() => setShowShare(false)} resumeId={id} />
+      <TailorModal
+        open={showTailor}
+        onClose={() => setShowTailor(false)}
+        content={content}
+      />
+      <ShareDialog
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        resumeId={id}
+      />
     </main>
   )
 }

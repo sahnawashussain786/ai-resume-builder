@@ -1,18 +1,26 @@
 import { useState } from 'react'
 import api from '../../lib/api.js'
 
-export const inputCls =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-export const labelCls = 'mb-1 block text-xs font-semibold text-slate-600'
+export const inputCls = 'input'
+export const labelCls = 'field-label'
 
-export function SectionCard({ title, onAdd, addLabel = 'Add', children }) {
+export function SectionCard({ title, onAdd, addLabel = 'Add', accent, children }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">{title}</h2>
+    <section className="panel" style={accent ? { borderColor: `${accent}40`, background: `linear-gradient(180deg, ${accent}08, ${accent}01)` } : {}}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+          {title}
+        </h2>
         {onAdd && (
-          <button onClick={onAdd} className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
-            + {addLabel}
+          <button
+            onClick={onAdd}
+            className="btn btn-ghost btn-sm"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mr-1">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            {addLabel}
           </button>
         )}
       </div>
@@ -26,14 +34,17 @@ export function RemoveBtn({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+      className="btn btn-danger btn-icon"
     >
-      ✕
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
     </button>
   )
 }
 
-export function AIButton({ onResult, payload, label = '✨ AI' }) {
+export function AIButton({ onResult, payload, label = 'AI' }) {
   const [busy, setBusy] = useState(false)
   const call = async () => {
     setBusy(true)
@@ -41,7 +52,7 @@ export function AIButton({ onResult, payload, label = '✨ AI' }) {
       const { data } = await api.post('/ai/improve-bullet', payload())
       onResult(data)
     } catch {
-      alert('AI request failed — is the server running?')
+      // keep quiet; parent handles errors
     } finally {
       setBusy(false)
     }
@@ -51,9 +62,18 @@ export function AIButton({ onResult, payload, label = '✨ AI' }) {
       type="button"
       onClick={call}
       disabled={busy}
-      className="shrink-0 rounded-md bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-50"
+      className="btn btn-ghost btn-sm"
     >
-      {busy ? '…' : label}
+      {busy ? (
+        <span className="h-2 w-2 rounded-full border-2 border-current/40 border-t-current animate-spin" />
+      ) : (
+        <span className="flex items-center gap-1">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a4 4 0 0 1 4 4c0 2-2 3.5-4 5.5C8 11.5 8 13 9 14l6 7c1 1 2 2 3 2s2-1 3-2l6-7c1-1 1-2.5 0-3.5C18 9.5 16 8 12 8a4 4 0 0 1 4-4z" />
+          </svg>
+          {label}
+        </span>
+      )}
     </button>
   )
 }

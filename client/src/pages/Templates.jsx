@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api.js'
-import { ACCENT_COLORS, TEMPLATE_IDS } from '../lib/resume.js'
+import { ACCENT_COLORS, TEMPLATE_IDS, FONTS } from '../lib/resume.js'
 import ResumePreview from '../components/templates/index.js'
 import { useToast } from '../components/Toast.jsx'
 
@@ -17,7 +17,14 @@ const SAMPLE = {
     portfolio: 'alexmorgan.dev',
     summary: 'Full-stack developer with 4 years of experience shipping web products end to end. Focused on React, Node.js and clean, maintainable systems.',
   },
-  skills: [{ name: 'React' }, { name: 'Node.js' }, { name: 'MongoDB' }, { name: 'TypeScript' }, { name: 'Tailwind CSS' }, { name: 'AWS' }],
+  skills: [
+    { name: 'React' },
+    { name: 'Node.js' },
+    { name: 'MongoDB' },
+    { name: 'TypeScript' },
+    { name: 'Tailwind CSS' },
+    { name: 'AWS' },
+  ],
   experience: [
     {
       role: 'Senior Frontend Developer',
@@ -36,12 +43,32 @@ const SAMPLE = {
       location: 'Austin, TX',
       start: '2021',
       end: '2023',
-      bullets: ['Shipped 12+ client features with a 99.9% on-time record.', 'Automated the deploy pipeline, saving ~6 engineer-hours weekly.'],
+      bullets: [
+        'Shipped 12+ client features with a 99.9% on-time record.',
+        'Automated the deploy pipeline, saving ~6 engineer-hours weekly.',
+      ],
     },
   ],
-  education: [{ degree: 'B.S. Computer Science', school: 'UT Austin', location: '', start: '2017', end: '2021', notes: 'GPA 3.8' }],
-  projects: [{ name: 'DevBoard', description: 'Kanban app with realtime collaboration, used by 2k+ developers.', link: 'github.com/alexmorgan/devboard' }],
-  certifications: [{ name: 'AWS Solutions Architect – Associate', issuer: 'Amazon', year: '2024' }],
+  education: [
+    {
+      degree: 'B.S. Computer Science',
+      school: 'UT Austin',
+      location: '',
+      start: '2017',
+      end: '2021',
+      notes: 'GPA 3.8',
+    },
+  ],
+  projects: [
+    {
+      name: 'DevBoard',
+      description: 'Kanban app with realtime collaboration, used by 2k+ developers.',
+      link: 'github.com/alexmorgan/devboard',
+    },
+  ],
+  certifications: [
+    { name: 'AWS Solutions Architect – Associate', issuer: 'Amazon', year: '2024' },
+  ],
   custom: [],
 }
 
@@ -50,13 +77,19 @@ export default function Templates() {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const [template, setTemplate] = useState('modern')
-  const [accent, setAccent] = useState('#2563eb')
+  const [accent, setAccent] = useState('#6c5ce7')
   const [font, setFont] = useState('sans')
 
   const startWith = async () => {
     setBusy(true)
     try {
-      const { data } = await api.post('/resumes', { title: 'My New Resume', template, accent, font, content: SAMPLE })
+      const { data } = await api.post('/resumes', {
+        title: 'My New Resume',
+        template,
+        accent,
+        font,
+        content: SAMPLE,
+      })
       navigate(`/builder/${data._id}`)
     } catch {
       toast('Save failed — is the server running?', 'error')
@@ -65,60 +98,124 @@ export default function Templates() {
     }
   }
 
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Templates</h1>
-      <p className="mt-2 text-slate-600 dark:text-slate-400">Pick a layout, accent color and font — you can change all of it later.</p>
+  const isSelected = (t) =>
+    template === t
+      ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent-2)]'
+      : 'border-[var(--border-1)] hover:border-[var(--border-2)]'
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-2">
-          {ACCENT_COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setAccent(c)}
-              className={`h-7 w-7 rounded-full transition ${accent === c ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
-              style={{ backgroundColor: c }}
-              aria-label={`Accent ${c}`}
-            />
-          ))}
-        </div>
-        <select
-          value={font}
-          onChange={(e) => setFont(e.target.value)}
-          className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-        >
-          <option value="sans">Inter / System</option>
-          <option value="serif">Georgia Serif</option>
-          <option value="mono">Monospace</option>
-          <option value="rounded">Rounded (Verdana)</option>
-        </select>
+  return (
+    <main className="animate-fade-in">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="badge badge-accent badge-mono">DESIGN</span>
+        <span className="text-xs font-mono" style={{ color: 'var(--text-2)' }}>
+          /templates
+        </span>
+      </div>
+      <div className="max-w-3xl">
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-0)' }}>
+          Templates
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: 'var(--text-1)' }}>
+          Pick a layout, accent color and font — you can change all of it later.
+        </p>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Controls */}
+      <div className="mt-6 panel flex flex-wrap items-center gap-4">
+        {/* Accent */}
+        <div className="flex-1">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+            Accent color
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ACCENT_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setAccent(c)}
+                className={`h-7 w-7 rounded-full transition ${accent === c ? 'ring-2 ring-[var(--text-0)] ring-offset-2 ring-offset-[var(--bg-2)]' : ''}`}
+                style={{ backgroundColor: c }}
+                aria-label={`Accent ${c}`}
+              />
+            ))}
+          </div>
+        </div>
+        {/* Font */}
+        <div className="flex-1">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+            Font
+          </div>
+          <select
+            value={font}
+            onChange={(e) => setFont(e.target.value)}
+            className="input w-full max-w-[200px]"
+          >
+            {FONTS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {TEMPLATE_IDS.map((t) => (
           <button
             key={t}
             onClick={() => setTemplate(t)}
-            className={`rounded-2xl border-2 p-3 text-left transition ${template === t ? 'border-blue-600 shadow-lg' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'}`}
+            className={`rounded-xl border-2 text-left transition ${isSelected(t)}`}
           >
-            <div className="overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-              <ResumePreview template={t} accent={accent} font={font} content={SAMPLE} scale={0.32} />
+            <div className="overflow-hidden rounded-lg bg-[var(--bg-1)]">
+              <ResumePreview
+                template={t}
+                accent={accent}
+                font={font}
+                content={SAMPLE}
+                scale={0.28}
+              />
             </div>
-            <div className="mt-3 flex items-center justify-between px-1">
-              <span className="font-semibold capitalize text-slate-900 dark:text-white">{t}</span>
-              {template === t && <span className="text-xs font-semibold text-blue-600">Selected</span>}
+            <div className="mt-2.5 flex items-center justify-between px-1">
+              <span className="text-sm font-semibold capitalize" style={{ color: 'var(--text-0)' }}>
+                {t}
+              </span>
+              {template === t && (
+                <span className="text-[10px] font-mono border border-[var(--accent)] rounded px-1.5 py-0.5" style={{ color: 'var(--accent-2)' }}>
+                  selected
+                </span>
+              )}
             </div>
           </button>
         ))}
       </div>
 
+      {/* CTA */}
       <div className="mt-8 flex justify-end">
         <button
           onClick={startWith}
           disabled={busy}
-          className="rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-8 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-50"
+          className="btn btn-primary btn-lg"
         >
-          {busy ? 'Creating…' : 'Start with this template →'}
+          {busy ? (
+            <>
+              <span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+              Creating…
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+              Start with this template
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </>
+          )}
         </button>
       </div>
     </main>

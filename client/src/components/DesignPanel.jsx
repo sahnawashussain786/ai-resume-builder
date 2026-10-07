@@ -31,19 +31,18 @@ export default function DesignPanel({ resume, markDirty }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Template */}
       <div>
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Template</h3>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+          Template
+        </div>
+        <div className="grid grid-cols-4 gap-2">
           {TEMPLATE_IDS.map((t) => (
             <button
               key={t}
               onClick={() => markDirty({ ...resume, template: t })}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition ${
-                resume.template === t
-                  ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:text-slate-300'
-              }`}
+              className={`rounded-lg border py-2 text-sm font-medium capitalize transition ${resume.template === t ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-2)]' : 'border-[var(--border-1)] text-[var(--text-1)] hover:border-[var(--border-2)] hover:text-[var(--text-0)]'}`}
             >
               {t}
             </button>
@@ -51,14 +50,17 @@ export default function DesignPanel({ resume, markDirty }) {
         </div>
       </div>
 
+      {/* Accent */}
       <div>
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Accent color</h3>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+          Accent color
+        </div>
         <div className="flex flex-wrap gap-2">
           {ACCENT_COLORS.map((c) => (
             <button
               key={c}
               onClick={() => markDirty({ ...resume, accent: c })}
-              className={`h-7 w-7 rounded-full transition ${resume.accent === c ? 'ring-2 ring-slate-400 ring-offset-2 dark:ring-offset-slate-800' : ''}`}
+              className={`h-7 w-7 rounded-full transition ${resume.accent === c ? 'ring-2 ring-[var(--text-0)] ring-offset-2 ring-offset-[var(--bg-2)]' : ''}`}
               style={{ backgroundColor: c }}
               aria-label={`Accent ${c}`}
             />
@@ -66,12 +68,15 @@ export default function DesignPanel({ resume, markDirty }) {
         </div>
       </div>
 
+      {/* Font */}
       <div>
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Font</h3>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+          Font
+        </div>
         <select
           value={resume.font || 'sans'}
           onChange={(e) => markDirty({ ...resume, font: e.target.value })}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          className="input w-full"
         >
           {FONTS.map((f) => (
             <option key={f.id} value={f.id}>
@@ -81,31 +86,77 @@ export default function DesignPanel({ resume, markDirty }) {
         </select>
       </div>
 
+      {/* Sections */}
       <div>
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sections (drag-free reorder)</h3>
+        <div className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>
+          Section order
+        </div>
+        <p className="mb-3 text-xs" style={{ color: 'var(--text-2)' }}>
+          Reorder with the arrow buttons. Hidden sections disappear from the preview.
+        </p>
         <div className="space-y-1.5">
           {order.map((key, i) => (
             <div
               key={key}
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
-                hidden.has(key) ? 'border-slate-100 bg-slate-50 opacity-50 dark:border-slate-800 dark:bg-slate-900' : 'border-slate-200 dark:border-slate-700'
+              className={`group flex items-center justify-between rounded-lg border px-3 py-2 transition ${
+                hidden.has(key)
+                  ? 'border-[var(--border-0)] bg-[var(--bg-1)] opacity-50'
+                  : 'border-[var(--border-1)] bg-[var(--bg-2)] hover:border-[var(--border-2)] hover:bg-[var(--bg-3)]'
               }`}
             >
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{LABELS[key] || key}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-mono opacity-40" style={{ color: 'var(--text-2)' }}>
+                  {i + 1}.
+                </span>
+                <span
+                  className="text-sm font-medium truncate"
+                  style={{ color: hidden.has(key) ? 'var(--text-2)' : 'var(--text-0)' }}
+                >
+                  {LABELS[key] || key}
+                </span>
+              </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => setOrder(move(order, i, i - 1))} className="rounded px-1.5 py-0.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-700" title="Move up">
-                  ↑
+                <button
+                  onClick={() => setOrder(move(order, i, i - 1))}
+                  className="btn btn-ghost btn-icon"
+                  title="Move up"
+                >
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
                 </button>
-                <button onClick={() => setOrder(move(order, i, i + 1))} className="rounded px-1.5 py-0.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-700" title="Move down">
-                  ↓
+                <button
+                  onClick={() => setOrder(move(order, i, i + 1))}
+                  className="btn btn-ghost btn-icon"
+                  title="Move down"
+                >
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </button>
                 <button
                   onClick={() => toggleHidden(key)}
-                  className={`ml-1 rounded px-2 py-0.5 text-[11px] font-semibold ${
-                    hidden.has(key) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                  className={`btn btn-ghost btn-sm btn-icon ml-0.5 ${
+                    hidden.has(key)
+                      ? 'text-[var(--green)]'
+                      : ''
                   }`}
+                  title={hidden.has(key) ? 'Show' : 'Hide'}
                 >
-                  {hidden.has(key) ? 'Show' : 'Hide'}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {hidden.has(key) ? (
+                      <>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </>
+                    )}
+                  </svg>
                 </button>
               </div>
             </div>

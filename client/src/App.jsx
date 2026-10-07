@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { ToastProvider } from './components/Toast.jsx'
@@ -19,67 +20,78 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/login" replace />
 }
 
+const ANIMATED_ROUTES = new Set(['/', '/dashboard', '/ai', '/upload', '/templates', '/cover-letter'])
+
 export default function App() {
+  const location = useLocation()
+  const keyRef = useRef(0)
+
+  useEffect(() => {
+    keyRef.current += 1
+  }, [location.pathname])
+
   return (
     <ThemeProvider>
       <ToastProvider>
-        <div className="min-h-screen bg-slate-50 text-slate-800 transition-colors dark:bg-slate-900 dark:text-slate-200">
+        <div className="min-h-screen bg-[var(--bg-0)] text-[var(--text-0)] font-sans antialiased">
           <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/r/:shareId" element={<PublicResume />} />
-            <Route
-              path="/dashboard"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/builder/:id"
-              element={
-                <PrivateRoute>
-                  <Builder />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/upload"
-              element={
-                <PrivateRoute>
-                  <Upload />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/ai"
-              element={
-                <PrivateRoute>
-                  <AIStudio />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/templates"
-              element={
-                <PrivateRoute>
-                  <Templates />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/cover-letter"
-              element={
-                <PrivateRoute>
-                  <CoverLetter />
-                </PrivateRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <main className="lg:max-w-7xl lg:mx-auto lg:px-6 xl:px-8 pt-28 pb-20 px-4 sm:px-6">
+            <Routes key={keyRef.current}>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/r/:shareId" element={<PublicResume />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/builder/:id"
+                element={
+                  <PrivateRoute>
+                    <Builder />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/upload"
+                element={
+                  <PrivateRoute>
+                    <Upload />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/ai"
+                element={
+                  <PrivateRoute>
+                    <AIStudio />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/templates"
+                element={
+                  <PrivateRoute>
+                    <Templates />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/cover-letter"
+                element={
+                  <PrivateRoute>
+                    <CoverLetter />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
         </div>
       </ToastProvider>
     </ThemeProvider>
