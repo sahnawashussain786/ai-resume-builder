@@ -24,7 +24,7 @@ export default function Dashboard() {
   useEffect(() => {
     api
       .get('/resumes')
-      .then(({ data }) => setResumes(data))
+      .then(({ data }) => setResumes(Array.isArray(data) ? data : []))
       .catch(() => setError('Could not load resumes — is the server running?'))
   }, [])
 
@@ -33,7 +33,7 @@ export default function Dashboard() {
     setRemoving(rid)
     try {
       await api.delete(`/resumes/${rid}`)
-      setResumes((rs) => rs.filter((r) => r._id !== rid))
+      setResumes((rs) => (Array.isArray(rs) ? rs.filter((r) => r._id !== rid) : rs))
       toast('Resume deleted', 'success')
     } catch {
       toast('Delete failed', 'error')
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const duplicate = async (rid) => {
     try {
       const { data } = await api.post(`/resumes/${rid}/duplicate`)
-      setResumes((rs) => [data, ...rs])
+      setResumes((rs) => Array.isArray(rs) ? [data, ...rs] : [data])
       toast('Resume duplicated', 'success')
     } catch {
       toast('Duplicate failed', 'error')
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
   const resumeList = resumes ?? []
   const filtered = resumeList.filter((r) =>
-    r.title?.toLowerCase().includes(query.toLowerCase())
+    r.title?.toLowerCase().includes((query ?? '').toLowerCase())
   )
   const avg =
     resumeList.length > 0
@@ -86,9 +86,9 @@ export default function Dashboard() {
             className="mt-1 text-sm"
             style={{ color: 'var(--text-1)' }}
           >
-            {resumes?.length === 0
+            {resumeList.length === 0
               ? 'No resumes yet. Create your first one below.'
-              : `${resumes.length} resume${resumes.length === 1 ? '' : 's'} · all in one place.`}
+              : `${resumeList.length} resume${resumeList.length === 1 ? '' : 's'} · all in one place.`}
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export default function Dashboard() {
                   className="text-xl font-bold"
                   style={{ color: 'var(--text-0)' }}
                 >
-                  {resumes.length}
+                  {resumeList.length}
                 </div>
                 <div
                   className="text-[10px] font-medium uppercase tracking-wider"
@@ -242,6 +242,16 @@ export default function Dashboard() {
       {resumes?.length > 0 && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((r) => {
+            if (!r.content) {
+              return (
+                <div key={`missing-${r._id ?? 'unknown'}`} className="panel panel-hover">
+                  <div className="text-sm" style={{ color: 'var(--text-1)' }}>
+                    Resume content unavailable.
+                  </div>
+                </div>
+              )
+            }
+
             const strength = resumeCompleteness(r.content).score
             const shared = Boolean(r.share?.enabled)
             const shortId = r._id && r._id.slice(-6)
@@ -267,10 +277,10 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-xs" style={{ color: 'var(--text-2)' }}>
                       <span className="rounded px-1.5 py-0.5 font-mono text-[11px]" style={{ background: 'var(--bg-3)', border: '1px solid var(--border-1)' }}>
-                        {r.template}
+                        {r.template || '—'}
                       </span>
                       <span>·</span>
-                      <span>Updated {new Date(r.updatedAt).toLocaleDateString()}</span>
+                      <span>Updated {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : '—'}</span>
                     </div>
                   </div>
                   <span className="text-[11px] font-mono hidden sm:inline" style={{ color: 'var(--text-3)' }}>
