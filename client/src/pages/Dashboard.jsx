@@ -52,12 +52,18 @@ export default function Dashboard() {
     }
   }
 
-  const filtered = (resumes || []).filter((r) => r.title.toLowerCase().includes(query.toLowerCase()))
-  const avg = resumes?.length
-    ? Math.round(resumes.reduce((s, r) => s + resumeCompleteness(r.content).score, 0) / resumes.length)
-    : 0
+  const resumeList = resumes ?? []
+  const filtered = resumeList.filter((r) =>
+    r.title?.toLowerCase().includes(query.toLowerCase())
+  )
+  const avg =
+    resumeList.length > 0
+      ? Math.round(
+          resumeList.reduce((s, r) => s + resumeCompleteness(r.content).score, 0) / resumeList.length
+        )
+      : 0
 
-  const first = user?.name?.split(' ')[0] || null
+  const first = user?.name?.trim()?.split(' ')[0] || null
 
   return (
     <main className="animate-fade-in">
@@ -238,7 +244,7 @@ export default function Dashboard() {
           {filtered.map((r) => {
             const strength = resumeCompleteness(r.content).score
             const shared = Boolean(r.share?.enabled)
-            const shortId = r._id?.slice(-6)
+            const shortId = r._id && r._id.slice(-6)
 
             return (
               <div
