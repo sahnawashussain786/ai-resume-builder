@@ -40,6 +40,13 @@ const PORT =
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://127.0.0.1:27017/resume-builder";
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "change-me-to-a-long-random-string") {
+  console.warn("⚠️  JWT_SECRET is unset or still the example default.");
+  console.warn('   Generate a real secret: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+
+  console.warn("   Tokens signed with the dev default are trivial to forge.");
+}
+
 async function connectMongo(attempt = 1) {
   try {
     await mongoose.connect(MONGO_URI);

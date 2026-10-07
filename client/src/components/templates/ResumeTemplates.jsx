@@ -1,4 +1,3 @@
-import { EMPTY_BASICS, FONTS } from '../../lib/resume.js'
 
 function Section({ title, children, className = '', dense = false }) {
   if (!children || (Array.isArray(children) && children.length === 0)) return null

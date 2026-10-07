@@ -3,6 +3,9 @@ import api from '../lib/api.js'
 
 export default function TailorModal({ open, onClose, content, onApplySuggestions }) {
   const [jd, setJd] = useState('')
+  const apply = async (suggestion) => {
+    if (onApplySuggestions) await onApplySuggestions(suggestion)
+  }
   const [loading, setLoading] = useState(false)
   const [analysis, setAnalysis] = useState(null)
 
@@ -84,6 +87,15 @@ export default function TailorModal({ open, onClose, content, onApplySuggestions
                   {analysis.suggestions.map((s, i) => (
                     <li key={i} className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-300">
                       {s}
+                      {onApplySuggestions && (
+                        <button
+                          type="button"
+                          onClick={() => apply(s)}
+                          className="ml-2 shrink-0 rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-blue-700"
+                        >
+                          Apply
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
