@@ -36,6 +36,7 @@ export default function Builder() {
   const navigate = useNavigate()
   const toast = useToast()
   const [resume, setResume] = useState(null)
+  const [key, setKey] = useState(0)
   const [tab, setTab] = useState('content')
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState(null)
@@ -52,13 +53,11 @@ export default function Builder() {
   }, [id])
 
   useEffect(() => {
-    let cancelled = false
+    setKey((k) => k + 1)
     if (id && id !== 'new') {
       api
         .get(`/resumes/${id}`)
-        .then(({ data }) => {
-          if (!cancelled) setResume(data)
-        })
+        .then(({ data }) => setResume(data))
         .catch(() => setError('Resume not found'))
     } else {
       setResume({
@@ -68,9 +67,6 @@ export default function Builder() {
         font: 'sans',
         content: emptyResume(),
       })
-    }
-    return () => {
-      cancelled = true
     }
   }, [id])
 
@@ -133,7 +129,7 @@ export default function Builder() {
       <main className="flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-sm" style={{ color: 'var(--text-1)' }}>
           <span className="h-5 w-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-          Loading editor…
+          {id && id !== 'new' ? 'Loading resume…' : 'Opening editor…'}
         </div>
       </main>
     )
@@ -146,7 +142,7 @@ export default function Builder() {
   const accent = resume.accent || '#6c5ce7'
 
   return (
-    <main key={keyRef.current} className="animate-fade-in">
+    <main key={key} className="animate-fade-in">
       {/* Toolbar */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
